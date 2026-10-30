@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out/
+*.log
+npm-debug.log*
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+.env
+bridge-config.json

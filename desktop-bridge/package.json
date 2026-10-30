@@ -1,0 +1,47 @@
+{
+  "name": "phone-bridge-desktop",
+  "version": "2.0.0",
+  "description": "Windows desktop port of PortScanner — full Supabase bridge with perms, env vars, modules, knowledge, skills, terminal. Built with Electron + Node.js.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron . --js-flags=--expose-gc",
+    "dev": "electron . --dev --js-flags=--expose-gc",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis portable",
+    "dist:nsis": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "keywords": ["electron", "supabase", "windows", "phone-bridge", "remote-control"],
+  "author": "Phone Bridge",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "build": {
+    "appId": "com.example.portscanner.desktopbridge",
+    "productName": "Phone Bridge Desktop",
+    "directories": { "output": "dist" },
+    "files": ["src/**/*", "package.json"],
+    "win": {
+      "target": [
+        {"target": "nsis", "arch": ["x64"]},
+        {"target": "portable", "arch": ["x64"]}
+      ],
+      "artifactName": "phone-bridge-desktop-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Phone Bridge Desktop"
+    },
+    "portable": {
+      "artifactName": "phone-bridge-desktop-${version}-portable.exe"
+    }
+  }
+}

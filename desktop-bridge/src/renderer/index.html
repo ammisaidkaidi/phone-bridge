@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' http://127.0.0.1:* https://*.supabase.co https://api.supabase.com;" />
+  <title>Phone Bridge Desktop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">🤖 Phone Bridge Desktop</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="bridge">🔗 Bridge</button>
+      <button class="tab" data-tab="terminal">💻 Terminal</button>
+      <button class="tab" data-tab="config">⚙ Configure</button>
+      <button class="tab" data-tab="perms">🔒 Perms</button>
+      <button class="tab" data-tab="modules">📦 Modules</button>
+      <button class="tab" data-tab="skills">⚡ Skills</button>
+    </div>
+    <div class="status">
+      <span id="status-dot" class="dot off"></span>
+      <span id="status-text">disconnected</span>
+    </div>
+  </header>
+
+  <!-- ============================ MAIN CONTENT (tab panels) ============================ -->
+  <main class="main-content">
+
+    <!-- ============================ BRIDGE ============================ -->
+    <section id="tab-bridge" class="tab-panel active">
+      <div class="row bridge-actions">
+        <button id="btn-connect" class="primary">🔗 Connect</button>
+        <button id="btn-disconnect" class="ghost" disabled>⛓ Disconnect</button>
+        <button id="btn-test-ping" class="ghost">⚡ Test ping</button>
+        <button id="btn-get-prompt" class="ghost">📋 Get AI Prompt</button>
+        <button id="btn-refresh-cmds" class="ghost">↻ Refresh</button>
+        <button id="btn-clear-cmds" class="ghost danger">🗑 Clear done</button>
+        <button id="btn-list-devices" class="ghost">📱 Devices</button>
+        <button id="btn-list-functions" class="ghost">📦 Functions</button>
+      </div>
+      <div id="bridge-status" class="info">Bridge: not connected</div>
+
+      <!-- 2-column resizable split: Activity Log (left) | Recent Commands (right) -->
+      <div class="bridge-split" id="bridge-split">
+        <!-- LEFT: Activity Log -->
+        <div class="bridge-log-panel" id="bridge-log-panel">
+          <div class="panel-header">
+            <h2>Activity log</h2>
+            <button id="btn-clear-log" class="ghost tiny">clear</button>
+          </div>
+          <div id="log" class="log-list"></div>
+        </div>
+
+        <!-- RESIZER (draggable) -->
+        <div class="bridge-resizer" id="bridge-resizer" title="drag to resize"></div>
+
+        <!-- RIGHT: Recent Commands -->
+        <div class="bridge-commands-panel" id="bridge-commands-panel">
+          <div class="panel-header">
+            <h2>Recent Commands <span class="hint">(right-click for actions · click line to copy)</span></h2>
+          </div>
+          <div class="legend">
+            <span class="dot idle"></span> idle
+            <span class="dot pending"></span> pending
+            <span class="dot processing"></span> processing
+            <span class="dot completed"></span> executed
+            <span class="dot failed"></span> failed
+          </div>
+          <div id="commands-list" class="commands-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ TERMINAL ============================ -->
+    <section id="tab-terminal" class="tab-panel">
+      <div class="row term-actions">
+        <button id="btn-term-start" class="primary">▶ Start server</button>
+        <button id="btn-term-stop" class="ghost danger" disabled>■ Stop server</button>
+        <span id="term-status" class="info">server: stopped</span>
+      </div>
+      <div class="row term-input">
+        <input id="term-cmd" type="text" placeholder="command (cmd.exe /c on Windows)" />
+        <button id="btn-term-exec" class="primary">▶ Run</button>
+        <button id="btn-term-kill" class="ghost danger" disabled>⏹ Kill</button>
+        <span id="term-cmd-id" class="info">id: --</span>
+      </div>
+      <div class="term-output-wrapper"><div id="term-output" class="term-output"></div></div>
+      <div class="row term-stdin">
+        <input id="term-stdin" type="text" placeholder="stdin input" />
+        <select id="term-mode"><option value="delivered">delivered</option><option value="consumed">consumed</option></select>
+        <button id="btn-term-send" class="primary">➤ Send</button>
+        <button id="btn-term-refresh" class="ghost">↻ Refresh</button>
+        <button id="btn-term-clear" class="ghost">✕ Clear</button>
+      </div>
+    </section>
+
+    <!-- ============================ CONFIGURE ============================ -->
+    <section id="tab-config" class="tab-panel">
+      <div class="card">
+        <h2>Supabase Connection <span class="hint">(defaults baked in — change only if you want a different project)</span></h2>
+
+        <div class="validated-input">
+          <label class="vi-label">Project URL</label>
+          <input id="cfg-url" type="text" />
+          <span id="flag-url" class="vi-flag unknown" title="not tested yet">?</span>
+        </div>
+
+        <div class="validated-input">
+          <label class="vi-label">Publishable / anon key</label>
+          <input id="cfg-key" type="text" />
+          <span id="flag-publishable" class="vi-flag unknown" title="not tested yet">?</span>
+        </div>
+
+        <div class="validated-input">
+          <label class="vi-label">Secret / service_role key</label>
+          <input id="cfg-secret" type="text" />
+          <span id="flag-secret" class="vi-flag unknown" title="not tested yet">?</span>
+        </div>
+
+        <div class="validated-input">
+          <label class="vi-label">Project ref</label>
+          <input id="cfg-ref" type="text" />
+        </div>
+
+        <div class="row">
+          <button id="btn-save-config" class="primary">💾 Save</button>
+          <button id="btn-load-config" class="ghost">Load saved</button>
+          <button id="btn-test-all" class="test-btn">🧪 Test all</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Auto-provision</h2>
+        <div class="validated-input">
+          <label class="vi-label">Personal Access Token (sbp_...)</label>
+          <input id="cfg-pat" type="password" />
+          <span id="flag-pat" class="vi-flag unknown" title="not tested yet">?</span>
+        </div>
+        <p class="hint">Tap Run Setup to: list projects → run schema SQL → fetch API keys → deploy 34 edge functions.</p>
+        <div class="row">
+          <button id="btn-run-setup" class="primary">▶ Run setup</button>
+          <button id="btn-redeploy-fns" class="ghost">↻ Redeploy functions</button>
+          <button id="btn-copy-sql" class="ghost">📋 Copy SQL</button>
+        </div>
+        <div id="setup-result" class="info hidden"></div>
+      </div>
+
+      <div class="card">
+        <h2>Device identity</h2>
+        <div id="device-info" class="info">Loading…</div>
+      </div>
+
+      <div class="card">
+        <h2>Environment variables <span class="hint">(per-device, editable via env_set command)</span></h2>
+        <div class="row">
+          <input id="env-key" type="text" placeholder="KEY" />
+          <input id="env-value" type="text" placeholder="value" />
+          <button id="btn-env-set" class="primary">Set</button>
+          <button id="btn-env-refresh" class="ghost">↻ Refresh</button>
+        </div>
+        <div id="env-list" class="info"></div>
+      </div>
+    </section>
+
+    <!-- ============================ PERMISSIONS ============================ -->
+    <section id="tab-perms" class="tab-panel">
+      <div class="card">
+        <h2>Per-command permissions</h2>
+        <p class="hint">Each command can be set to ALLOW (default), ASK (treated as ALLOW on Windows — the UI is always visible), or DENY (blocked outright).</p>
+        <div class="row">
+          <input id="perm-cmd" type="text" placeholder="command name (e.g. shell)" />
+          <select id="perm-decision"><option value="ALLOW">ALLOW</option><option value="ASK">ASK</option><option value="DENY">DENY</option></select>
+          <button id="btn-perm-set" class="primary">Set</button>
+          <button id="btn-perm-refresh" class="ghost">↻ Refresh</button>
+        </div>
+        <div id="perm-list" class="info"></div>
+      </div>
+    </section>
+
+    <!-- ============================ MODULES ============================ -->
+    <section id="tab-modules" class="tab-panel">
+      <div class="card">
+        <h2>Installed modules (.mdl)</h2>
+        <p class="hint">.mdl modules are ZIP archives containing manifest.json + classes.dex. On Windows they're tracked as a catalog only — module commands return "not supported on Windows" since Dalvik bytecode can't run here.</p>
+        <div class="row">
+          <input id="mod-path" type="text" placeholder="path to .mdl file" />
+          <button id="btn-mod-install" class="primary">Install</button>
+          <button id="btn-mod-refresh" class="ghost">↻ Refresh</button>
+        </div>
+        <div id="mod-list" class="info"></div>
+      </div>
+    </section>
+
+    <!-- ============================ SKILLS ============================ -->
+    <section id="tab-skills" class="tab-panel">
+      <div class="card">
+        <h2>Skills entries</h2>
+        <div class="row">
+          <input id="sk-title" type="text" placeholder="title" />
+          <input id="sk-tags" type="text" placeholder="tags (comma-separated)" />
+        </div>
+        <input id="sk-summary" type="text" placeholder="summary (one line)" style="width:100%;margin-bottom:8px" />
+        <textarea id="sk-content" rows="4" placeholder="content (markdown)"></textarea>
+        <div class="row">
+          <button id="btn-sk-add" class="primary">+ Add</button>
+          <button id="btn-sk-sync" class="ghost">↻ Sync from DB</button>
+          <button id="btn-sk-refresh" class="ghost">↻ Refresh</button>
+          <input id="sk-search" type="text" placeholder="search…" />
+          <button id="btn-sk-search" class="ghost">🔍</button>
+        </div>
+        <div id="sk-list" class="info"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
